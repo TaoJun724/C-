@@ -10,7 +10,7 @@ using namespace std;
 namespace TJ
 {
 	template <class T>
-	struct ListNode 
+	struct ListNode
 	{
 		//匿名对象T
 		ListNode(const T& data = T()) :_data(data), _next(nullptr), _prev(nullptr)
@@ -22,11 +22,12 @@ namespace TJ
 		ListNode<T>* _prev;
 	};
 
-	template <class T>
+	template <class T, class Ref, class Ptr>
 	struct ListIterator
 	{
 		typedef  ListNode<T> Node;
-		typedef ListIterator<T> Iterator;
+		typedef ListIterator<T, Ref, Ptr> Iterator;
+
 
 
 		ListIterator(Node* node) :_node(node)
@@ -39,9 +40,13 @@ namespace TJ
 
 		}
 
-		T& operator*()
+		Ref operator*()
 		{
 			return _node->_data;
+		}
+		Ptr operator->()
+		{
+			return &(operator*());
 		}
 		//前置++
 		Iterator operator++()
@@ -91,13 +96,13 @@ namespace TJ
 	class List
 	{
 		typedef ListNode<T> Node;
-	
-	public:
 
-		typedef ListIterator<T> Iterator;
+	public:
+		typedef ListIterator<T, T&, T*> Iterator;
+		typedef ListIterator<T, const T&, const T*> Const_Iterator;
 		//构造函数
 		//构造空的list
-		List():_head(new Node)
+		List() :_head(new Node)
 		{
 			_head->_next = _head;
 			_head->_prev = _head;
@@ -114,7 +119,9 @@ namespace TJ
 			}
 		}
 		///用[first, last)区间中的元素构造list
-		List(Iterator first, Iterator last) :_head(new Node)
+		template<class Iterator>
+		List(Iterator first, Iterator last)
+			:_head(new Node)
 		{
 			_head->_next = _head;
 			_head->_prev = _head;
@@ -130,7 +137,7 @@ namespace TJ
 		{
 			_head->_next = _head;
 			_head->_prev = _head;
-		
+
 			List<T> tmp(l.begin(), l.end());
 			swap(_head, l._head);
 		}
@@ -181,124 +188,132 @@ namespace TJ
 
 		void PushBack(const T& data)
 		{
-			Node* tail = _head->_prev;
+			/*Node* tail = _head->_prev;
 			Node* newnode = new Node(data);
 			tail->_next = newnode;
 			newnode->_prev = tail;
 			newnode->_next = _head;
-			_head->_prev = newnode;
+			_head->_prev = newnode;*/
+
+			Insert(end(), data);
 		}
 
 		void PopBack()
 		{
-			Node* del = _head->_prev;
+			/*Node* del = _head->_prev;
 			if (del != _head)
 			{
-				Node* tail = del->_prev;
-				_head->_prev = tail;
-				tail->_next = _head;
-				delete del;
-				del = nullptr;
+			Node* tail = del->_prev;
+			_head->_prev = tail;
+			tail->_next = _head;
+			delete del;
+			del = nullptr;
+			}*/
+
+			Erase(--end());
+		}
+
+		void PushFront(const T& data)
+		{
+			/*Node* front = _head->_next;
+			Node* newnode = new Node(data);
+			_head->_next = newnode;
+			newnode->_prev = _head;
+			newnode->_next = front;
+			front->_prev = newnode;*/
+
+			Insert(begin(), data);
+		}
+		void PopFront()
+		{
+			/*Node* second = _head->_next->_next;
+			_head->_next = second;
+			delete second->_prev;
+			second->_prev = _head;*/
+
+			Erase(begin());
+		}
+		void Insert(Iterator pos, const T& data)
+		{
+			Node* cur = pos._node;
+			Node* pre = cur->_prev;
+			Node* newnode = new Node(data);
+			cur->_prev = newnode;
+			newnode->_next = cur;
+			newnode->_prev = pre;
+			pre->_next = newnode;
+		}
+		void Erase(Iterator pos)
+		{
+			Node* del = pos._node;
+			Node* next = del->_next;
+			Node* pre = del->_prev;
+			pre->_next = next;
+			next->_prev = pre;
+			delete del;
+			del = nullptr;
+		}
+
+		T& Front()
+		{
+			return _head->_next->_data;
+		}
+		T& Back()
+		{
+			return _head->_prev->_data;
+		}
+
+		Iterator Find(const T& data)
+		{
+			Node* cur = _head->_next;
+			while (cur != _head)
+			{
+				if (cur->_data == data)
+				{
+					return Iterator(cur);
+				}
+				cur = cur->_next;
 			}
 		}
 
-			void PushFront(const T& data)
-			{
-				Node* front = _head->_next;
-				Node* newnode = new Node(data);
-				_head->_next = newnode;
-				newnode->_prev = _head;
-				newnode->_next = front;
-				front->_prev = newnode;
-			}
-			void PopFront()
-			{
-				Node* second = _head->_next->_next;
-				_head->_next = second;
-				delete second->_prev;
-				second->_prev = _head;
-			}
-			void Insert(Iterator pos, const T& data)
-			{
-				Node* cur = pos._node;
-				Node* pre = cur->_prev;
-				Node* newnode = new Node(data);
-				cur->_prev = newnode;
-				newnode->_next = cur;
-				newnode->_prev = pre;
-				pre->_next = newnode;
-			}
-			void Erase(Iterator pos)
-			{
-				Node* del = pos._node;
-				Node* next = del->_next;
-				Node* pre = del->_prev;
-				pre->_next = next;
-				next->_prev = pre;
-				delete del;
-				del = nullptr;
-			}
 
-			T& Front()
+		size_t Size() const//O(n)不要经常调用
+		{
+			size_t count = 0;
+			Node* cur = _head->_next;
+			while (cur != _head)
 			{
-				return _head->_next->_data;
+				++count;
+				cur = cur->_next;
 			}
-			T& Back()
-			{
-				return _head->_prev->_data;
-			}
+			return count;
+		}
 
-			Iterator Find(const T& data)
+		bool Empty()
+		{
+			return _head->_next == _head;
+		}
+		void Resize(int newsize, const T& data = T())
+		{
+			int oldsize = Size();
+			if (newsize < oldsize)
 			{
-				Node* cur = _head->_next;
-				while (cur != _head)
+				for (int i = 0; i < (oldsize - newsize); i++)
 				{
-					if (cur->_data == data)
-					{
-						return Iterator(cur);
-					}
-					cur = cur->_next;
+					PopBack();
 				}
 			}
-
-
-			size_t Size() const
+			else
 			{
-				size_t count = 0;
-				Node* cur = _head->_next;
-				while (cur != _head)
+				for (int i = 0; i < (newsize - oldsize); i++)
 				{
-					++count;
-					cur = cur->_next;
-				}
-				return count;
-			}
-
-			bool Empty()
-			{
-				return _head->_next == _head;
-			}
-			void Resize(int newsize, const T& data = T())
-			{
-				int oldsize = Size();
-				if (newsize < oldsize)
-				{
-					for (int i = 0; i < (oldsize - newsize); i++)
-					{
-						PopBack();
-					}
-				}
-				else
-				{
-					for (int i = 0; i < (newsize - oldsize); i++)
-					{
-						PushBack(data);
-					}
+					PushBack(data);
 				}
 			}
+		}
 
 
-		
+
 	private:
 		Node* _head;
 	};
