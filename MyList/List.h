@@ -263,6 +263,15 @@ namespace TJ
 			return _head->_prev->_data;
 		}
 
+		const T& Front()
+		{
+			return _head->_next->_data;
+		}
+		const T& Back()
+		{
+			return _head->_prev->_data;
+		}
+
 		Iterator Find(const T& data)
 		{
 			Node* cur = _head->_next;
