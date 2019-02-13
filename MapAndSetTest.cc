@@ -67,7 +67,6 @@ void test_multiset()
 
 void test_map()
 {
-  //去重
  // 去重并按照key排序
   std::map<std::string,std::string> dict;
   dict.insert(std::pair<std::string,std::string>("insert","插入"));
